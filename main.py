@@ -7,7 +7,7 @@ import pygame
 
 WIDTH = 800
 HEIGHT = 600
-FPS = 50
+FPS = 30
 
 
 class Hero(pygame.sprite.Sprite):
@@ -42,6 +42,7 @@ class Hero(pygame.sprite.Sprite):
         self.is_climb = False
         self.current_health = 10
         self.max_health = 10
+        self.dmg = 2
         self.add(hero_sprites)
         self.is_hero_die = False
 
@@ -74,7 +75,6 @@ class Hero(pygame.sprite.Sprite):
         else:
             self.go = False
             self.hero_died()
-        clock.tick(30)
 
     def action(self, action):
         """
@@ -215,7 +215,6 @@ class Box(pygame.sprite.Sprite):
 
     def update(self):
         self.collide()
-        clock.tick(30)
 
     def collide(self):
         if not pygame.sprite.spritecollideany(self, platform_sprites) and \
@@ -242,6 +241,19 @@ class Acid(pygame.sprite.Sprite):
         self.add(acid_sprites)
 
 
+class Wall(pygame.sprite.Sprite):
+    def __init__(self, pos, size):
+        super().__init__(all_sprites)
+        self.pos = pos
+        self.size = size
+        self.image = pygame.Surface(self.size)
+        pygame.draw.rect(self.image, pygame.Color("grey"), pygame.Rect(0, 0, *self.size))
+        self.rect = pygame.Rect(self.pos[0], self.pos[1], 100, 10)
+        self.vx = 0
+        self.vy = 0
+        self.add(wall_sprites)
+
+
 class Monsters(pygame.sprite.Sprite):
     def __init__(self, pos):
         super().__init__(all_sprites)
@@ -252,6 +264,32 @@ class SimpleMonster(Monsters):
     def __init__(self, pos):
         super().__init__(pos)
         self.pos = pos
+        self.image = pygame.Surface((20, 80))
+        pygame.draw.rect(self.image, pygame.Color("pink"), pygame.Rect(0, 0, 20, 80))
+        self.rect = pygame.Rect(self.pos[0], self.pos[1], 20, 80)
+        self.vx = 0
+        self.vy = 0
+        self.add(simple_monster_sprites)
+        self.hp = 3
+        self.dmg = 1
+        self.route = True
+
+    def update(self):
+        self.collide()
+
+    def collide(self):
+        if not pygame.sprite.spritecollideany(self, platform_sprites) and \
+                not pygame.sprite.spritecollideany(self, ladder_sprites) and \
+                not pygame.sprite.spritecollideany(self, acid_sprites) and \
+                not pygame.sprite.spritecollideany(self, box_sprites):
+            self.rect = self.rect.move(self.vx, self.vy + 10)
+        if pygame.sprite.spritecollideany(self, platform_sprites):
+            if self.route:
+                self.rect = self.rect.move(self.vx + 5, self.vy)
+            else:
+                self.rect = self.rect.move(self.vx - 5, self.vy)
+        if pygame.sprite.spritecollideany(self, ladder_sprites) or pygame.sprite.spritecollideany(self, wall_sprites):
+            self.route = True if not self.route else False
 
 
 def terminate():
@@ -269,7 +307,7 @@ def start_screen():
     )
     choice_level_btn = pygame_gui.elements.UIButton(
         relative_rect=pygame.Rect((300, 400), (150, 50)),
-        text='Выбрать уровень',
+        text='Карта уровней',
         manager=manager
     )
     settings_btn = pygame_gui.elements.UIButton(
@@ -305,6 +343,12 @@ def map_of_levels():
         text='В меню',
         manager=manager
     )
+    for i in range(3):
+        level_btn = pygame_gui.elements.UIButton(
+            relative_rect=pygame.Rect((i * 100 + 100, 400), (50, 50)),
+            text=f'{str(i + 1)}',
+            manager=manager
+        )
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -313,7 +357,9 @@ def map_of_levels():
                 if event.user_type == pygame_gui.UI_BUTTON_PRESSED:
                     if menu_btn.pressed:
                         start_screen()
-                        return
+                    if level_btn.pressed:
+                        open_level(level_btn.text, None)
+                    return
             manager.process_events(event)
         manager.update(FPS)
         manager.draw_ui(screen)
@@ -379,9 +425,9 @@ def final_screen():
                 if event.user_type == pygame_gui.UI_BUTTON_PRESSED:
                     if menu_btn.pressed:
                         start_screen()
-                        return 1
+                        return
                     if start_new_level_btn.pressed:
-                        return level
+                        return
             manager.process_events(event)
         manager.update(FPS)
         manager.draw_ui(screen)
@@ -390,11 +436,25 @@ def final_screen():
 
 
 def open_level(level, hero):
-    if hero is not None:
-        if hero.is_hero_die:
-            level += 1
-            final_screen()
-    return level
+    if event.key == pygame.K_2:
+        if hero is not None:
+            if hero.is_hero_die:
+                level += 1
+                final_screen()
+        all_sprites.empty()
+        direct = f'level_{str(level)}'
+        for i in classes.keys():
+            classes[i][1].empty()
+            if os.path.exists(f'levels/{direct}/{i}.json'):
+                with open(f'levels/{direct}/{i}.json', 'r') as file:
+                    data = json.load(file)
+                    for pos in data:
+                        classes[i][1].add(classes[i][0](pos))
+            else:
+                final_screen()
+                level = 1
+        hero = None
+    return level, hero
 
 
 if __name__ == '__main__':
@@ -416,6 +476,8 @@ if __name__ == '__main__':
     ladder_sprites = pygame.sprite.Group()
     box_sprites = pygame.sprite.Group()
     acid_sprites = pygame.sprite.Group()
+    wall_sprites = pygame.sprite.Group()
+    simple_monster_sprites = pygame.sprite.Group()
 
     classes = {'hero': [Hero, hero_sprites], 'platforms': [Platform, platform_sprites], 'boxes': [Box, box_sprites],
                'ladders': [Ladder, ladder_sprites], 'acids': [Acid, acid_sprites]}
@@ -427,17 +489,27 @@ if __name__ == '__main__':
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.KM & pygame.key.get_mods():
+                    if event.type == pygame.MOUSEBUTTONDOWN:
+                        if event.button == pygame.BUTTON_LEFT:
+                            new_object = Wall(event.pos, (100, 100))
+
             if event.type == pygame.MOUSEBUTTONDOWN:
-                if event.button == pygame.BUTTON_RIGHT and not pygame.KMOD_CTRL & pygame.key.get_mods():
-                    hero = Hero(event.pos)
-                if event.button == pygame.BUTTON_LEFT and not pygame.KMOD_CTRL & pygame.key.get_mods():
-                    new_object = Platform(event.pos)
-                if event.button == pygame.BUTTON_LEFT and pygame.KMOD_CTRL & pygame.key.get_mods():
+                if event.button == pygame.BUTTON_LEFT and pygame.KMOD_SHIFT & pygame.key.get_mods():
+                    new_object = Wall(event.pos, (10, 100))
+                elif event.button == pygame.BUTTON_LEFT and pygame.KMOD_CTRL & pygame.key.get_mods():
                     new_object = Ladder(event.pos)
-                if event.button == pygame.BUTTON_RIGHT and pygame.KMOD_CTRL & pygame.key.get_mods():
+                elif event.button == pygame.BUTTON_RIGHT and pygame.KMOD_CTRL & pygame.key.get_mods():
                     new_object = Box(event.pos)
-                if event.button == pygame.BUTTON_MIDDLE and pygame.KMOD_CTRL & pygame.key.get_mods():
+                elif event.button == pygame.BUTTON_MIDDLE and pygame.KMOD_CTRL & pygame.key.get_mods():
                     new_object = Acid(event.pos)
+                elif event.button == pygame.BUTTON_RIGHT and not pygame.KMOD_CTRL & pygame.key.get_mods():
+                    hero = Hero(event.pos)
+                elif event.button == pygame.BUTTON_LEFT and not pygame.KMOD_CTRL & pygame.key.get_mods():
+                    new_object = Platform(event.pos)
+                elif event.button == pygame.BUTTON_MIDDLE and not pygame.KMOD_CTRL & pygame.key.get_mods():
+                    new_object = SimpleMonster(event.pos)
             if event.type == pygame.KEYDOWN:
                 if new_object:
                     if event.key == pygame.K_w:
@@ -454,20 +526,7 @@ if __name__ == '__main__':
                         with open(f'levels/{level}/{i}.json', 'w') as file:
                             data = [sprite.rect.topleft for sprite in classes[i][1]]
                             json.dump(data, file)
-                if event.key == pygame.K_2:
-                    level = open_level(level, hero)
-                    all_sprites.empty()
-                    direct = f'level_{str(level)}'
-                    for i in classes.keys():
-                        classes[i][1].empty()
-                        if os.path.exists(f'levels/{direct}/{i}.json'):
-                            with open(f'levels/{direct}/{i}.json', 'r') as file:
-                                data = json.load(file)
-                                for pos in data:
-                                    classes[i][1].add(classes[i][0](pos))
-                        else:
-                            final_screen()
-                            level = 1
+                level, hero = open_level(level, hero)
         all_sprites.update()
         all_sprites.draw(screen)
         pygame.display.flip()
