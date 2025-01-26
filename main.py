@@ -23,12 +23,13 @@ class Hero(pygame.sprite.Sprite):
     character_die = "images/die.png"
     character_jump = "images/jump.png"
 
-    def __init__(self, pos):
+    def __init__(self, pos, size=(50, 100)):
         super().__init__(all_sprites)
         self.pos = pos
+        self.size = size
         self.image = pygame.image.load(Hero.character_go[1]).convert_alpha()
-        self.image = pygame.transform.scale(self.image, (50, 100))
-        self.rect = pygame.Rect(self.pos[0], self.pos[1], 50, 100)
+        self.image = pygame.transform.scale(self.image, self.size)
+        self.rect = pygame.Rect(self.pos[0], self.pos[1], *self.size)
         self.rect.x = self.pos[0]
         self.rect.y = self.pos[1]
         self.x = self.pos[0]
@@ -152,7 +153,7 @@ class Hero(pygame.sprite.Sprite):
                 if event.key == pygame.K_LEFT:
                     push_box.push(False)
             self.action('push')
-        if pygame.sprite.spritecollideany(self, acid_sprites):
+        if pygame.sprite.spritecollideany(self, acid_sprites) or pygame.sprite.spritecollideany(self, monster_sprites):
             self.action('die')
             self.is_hero_die = True
 
@@ -483,9 +484,10 @@ if __name__ == '__main__':
     wall_sprites = pygame.sprite.Group()
     monster_sprites = pygame.sprite.Group()
 
-    classes = {'hero': [Hero, hero_sprites], 'platforms': [Platform, platform_sprites], 'boxes': [Box, box_sprites],
-               'ladders': [Ladder, ladder_sprites], 'acids': [Acid, acid_sprites], 'walls': [Wall, wall_sprites],
-               'monster': [Monster, monster_sprites]}
+    classes = {'hero': [Hero, hero_sprites, []], 'platforms': [Platform, platform_sprites, []],
+               'boxes': [Box, box_sprites, []], 'ladders': [Ladder, ladder_sprites, []],
+               'acids': [Acid, acid_sprites, []], 'walls': [Wall, wall_sprites, []],
+               'monster': [Monster, monster_sprites, []]}
     new_object = None  # Любой новый созданный объект можно двигать, кроме героя.
     level = 1
     hero = None
@@ -495,20 +497,29 @@ if __name__ == '__main__':
             if event.type == pygame.QUIT:
                 running = False
             if event.type == pygame.MOUSEBUTTONDOWN:
+                if new_object is not None:
+                    classes[new_object.name][2].append(new_object)
                 if event.button == pygame.BUTTON_LEFT and pygame.KMOD_SHIFT & pygame.key.get_mods():
                     new_object = Wall(event.pos)
+                    new_object.name = 'walls'
                 elif event.button == pygame.BUTTON_LEFT and pygame.KMOD_CTRL & pygame.key.get_mods():
                     new_object = Ladder(event.pos)
+                    new_object.name = 'ladders'
                 elif event.button == pygame.BUTTON_RIGHT and pygame.KMOD_CTRL & pygame.key.get_mods():
                     new_object = Box(event.pos)
+                    new_object.name = 'boxes'
                 elif event.button == pygame.BUTTON_MIDDLE and pygame.KMOD_CTRL & pygame.key.get_mods():
                     new_object = Acid(event.pos)
+                    new_object.name = 'acids'
                 elif event.button == pygame.BUTTON_RIGHT and not pygame.KMOD_CTRL & pygame.key.get_mods():
                     hero = Hero(event.pos)
+                    classes['hero'][2].append(hero)
                 elif event.button == pygame.BUTTON_LEFT and not pygame.KMOD_CTRL & pygame.key.get_mods():
                     new_object = Platform(event.pos)
+                    new_object.name = 'platforms'
                 elif event.button == pygame.BUTTON_MIDDLE and not pygame.KMOD_CTRL & pygame.key.get_mods():
                     new_object = Monster(event.pos)
+                    new_object.name = 'monster'
             if event.type == pygame.KEYDOWN:
                 if new_object:
                     if event.key == pygame.K_w:
@@ -526,10 +537,11 @@ if __name__ == '__main__':
                         pygame.draw.rect(new_object.image, pygame.Color(new_object.color), pygame.Rect(0, 0, *size))
                 if event.key == pygame.K_1:
                     level = input('В какой уровень сохранить: ')
+                    classes[new_object.name][2].append(new_object)
                     with open(f'levels/{level}.json', 'w') as file:
                         data = []
                         for i in classes.keys():
-                            data.append([[i, [sprite.rect.x, sprite.rect.y], sprite.size] for sprite in classes[i][1]])
+                            data.append([[i, [sprite.rect.x, sprite.rect.y], sprite.size] for sprite in classes[i][2]])
                         json.dump(data, file)
                 level, hero = open_level(level, hero)
         all_sprites.update()
