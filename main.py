@@ -40,9 +40,6 @@ class Hero(pygame.sprite.Sprite):
         self.frame_push = 0
         self.flag = 0
         self.is_climb = False
-        self.current_health = 10
-        self.max_health = 10
-        self.dmg = 2
         self.add(hero_sprites)
         self.is_hero_die = False
 
@@ -179,52 +176,56 @@ class Hero(pygame.sprite.Sprite):
 
 
 class Platform(pygame.sprite.Sprite):
-    def __init__(self, pos):
+    def __init__(self, pos, size=(100, 10)):
         super().__init__(all_sprites)
         self.pos = pos
         self.color = 'grey'
-        self.image = pygame.Surface((100, 10))
-        pygame.draw.rect(self.image, pygame.Color(self.color), pygame.Rect(0, 0, 100, 10))
-        self.rect = pygame.Rect(self.pos[0], self.pos[1], 100, 10)
+        self.size = size
+        self.image = pygame.Surface(self.size)
+        pygame.draw.rect(self.image, pygame.Color(self.color), pygame.Rect(0, 0, *self.size))
+        self.rect = pygame.Rect(self.pos[0], self.pos[1], *self.size)
         self.vx = 0
         self.vy = 0
         self.add(platform_sprites)
 
 
 class Ladder(pygame.sprite.Sprite):
-    def __init__(self, pos):
+    def __init__(self, pos, size=(10, 100)):
         super().__init__(all_sprites)
         self.pos = pos
+        self.size = size
         self.color = 'red'
-        self.image = pygame.Surface((10, 100))
-        pygame.draw.rect(self.image, pygame.Color(self.color), pygame.Rect(0, 0, 10, 100))
-        self.rect = pygame.Rect(self.pos[0], self.pos[1], 10, 100)
+        self.image = pygame.Surface(self.size)
+        pygame.draw.rect(self.image, pygame.Color(self.color), pygame.Rect(0, 0, *self.size))
+        self.rect = pygame.Rect(self.pos[0], self.pos[1], *self.size)
         self.vx = 0
         self.vy = 0
         self.add(ladder_sprites)
 
 
 class Wall(pygame.sprite.Sprite):
-    def __init__(self, pos):
+    def __init__(self, pos, size=(10, 100)):
         super().__init__(all_sprites)
         self.pos = pos
+        self.size = size
         self.color = 'grey'
-        self.image = pygame.Surface((10, 100))
-        pygame.draw.rect(self.image, pygame.Color(self.color), pygame.Rect(0, 0, 10, 100))
-        self.rect = pygame.Rect(self.pos[0], self.pos[1], 10, 100)
+        self.image = pygame.Surface(self.size)
+        pygame.draw.rect(self.image, pygame.Color(self.color), pygame.Rect(0, 0, *self.size))
+        self.rect = pygame.Rect(self.pos[0], self.pos[1], *self.size)
         self.vx = 0
         self.vy = 0
         self.add(wall_sprites)
 
 
 class Box(pygame.sprite.Sprite):
-    def __init__(self, pos):
+    def __init__(self, pos, size=(50, 50)):
         super().__init__(all_sprites)
         self.pos = pos
+        self.size = size
         self.color = 'white'
-        self.image = pygame.Surface((50, 50))
-        pygame.draw.rect(self.image, pygame.Color(self.color), pygame.Rect(0, 0, 50, 50))
-        self.rect = pygame.Rect(self.pos[0], self.pos[1], 50, 50)
+        self.image = pygame.Surface(self.size)
+        pygame.draw.rect(self.image, pygame.Color(self.color), pygame.Rect(0, 0, *self.size))
+        self.rect = pygame.Rect(self.pos[0], self.pos[1], *self.size)
         self.vx = 0
         self.vy = 0
         self.add(box_sprites)
@@ -246,37 +247,31 @@ class Box(pygame.sprite.Sprite):
 
 
 class Acid(pygame.sprite.Sprite):
-    def __init__(self, pos):
+    def __init__(self, pos, size=(100, 10)):
         super().__init__(all_sprites)
         self.pos = pos
+        self.size = size
         self.color = 'green'
-        self.image = pygame.Surface((100, 10))
-        pygame.draw.rect(self.image, pygame.Color(self.color), pygame.Rect(0, 0, 100, 10))
-        self.rect = pygame.Rect(self.pos[0], self.pos[1], 100, 10)
+        self.image = pygame.Surface(self.size)
+        pygame.draw.rect(self.image, pygame.Color(self.color), pygame.Rect(0, 0, *self.size))
+        self.rect = pygame.Rect(self.pos[0], self.pos[1], *self.size)
         self.vx = 0
         self.vy = 0
         self.add(acid_sprites)
 
 
-class Monsters(pygame.sprite.Sprite):
-    def __init__(self, pos):
+class Monster(pygame.sprite.Sprite):
+    def __init__(self, pos, size=(20, 80)):
         super().__init__(all_sprites)
-        pass
-
-
-class SimpleMonster(Monsters):
-    def __init__(self, pos):
-        super().__init__(pos)
         self.pos = pos
+        self.size = size
         self.color = 'pink'
-        self.image = pygame.Surface((20, 80))
-        pygame.draw.rect(self.image, pygame.Color(self.color), pygame.Rect(0, 0, 20, 80))
-        self.rect = pygame.Rect(self.pos[0], self.pos[1], 20, 80)
+        self.image = pygame.Surface(self.size)
+        pygame.draw.rect(self.image, pygame.Color(self.color), pygame.Rect(0, 0, *self.size))
+        self.rect = pygame.Rect(self.pos[0], self.pos[1], *self.size)
         self.vx = 0
         self.vy = 0
-        self.add(simple_monster_sprites)
-        self.hp = 3
-        self.dmg = 1
+        self.add(monster_sprites)
         self.route = True
 
     def update(self):
@@ -452,14 +447,16 @@ def open_level(level, hero):
         direct = f'level_{str(level)}'
         for i in classes.keys():
             classes[i][1].empty()
-            if os.path.exists(f'levels/{direct}/{i}.json'):
-                with open(f'levels/{direct}/{i}.json', 'r') as file:
-                    data = json.load(file)
-                    for pos in data:
-                        classes[i][1].add(classes[i][0](pos))
-            else:
-                final_screen()
-                level = 1
+        if os.path.exists(f'levels/{direct}.json'):
+            with open(f'levels/{direct}.json', 'r', encoding='utf-8') as file:
+                data = json.load(file)
+                for objs in data:
+                    if objs != []:
+                        for pos in objs:
+                            classes[pos[0]][1].add(classes[pos[0]][0](pos[1], pos[2]))
+        else:
+            final_screen()
+            level = 1
         hero = None
     return level, hero
 
@@ -484,11 +481,11 @@ if __name__ == '__main__':
     box_sprites = pygame.sprite.Group()
     acid_sprites = pygame.sprite.Group()
     wall_sprites = pygame.sprite.Group()
-    simple_monster_sprites = pygame.sprite.Group()
+    monster_sprites = pygame.sprite.Group()
 
     classes = {'hero': [Hero, hero_sprites], 'platforms': [Platform, platform_sprites], 'boxes': [Box, box_sprites],
                'ladders': [Ladder, ladder_sprites], 'acids': [Acid, acid_sprites], 'walls': [Wall, wall_sprites],
-               'simple_monster': [SimpleMonster, simple_monster_sprites]}
+               'monster': [Monster, monster_sprites]}
     new_object = None  # Любой новый созданный объект можно двигать, кроме героя.
     level = 1
     hero = None
@@ -511,7 +508,7 @@ if __name__ == '__main__':
                 elif event.button == pygame.BUTTON_LEFT and not pygame.KMOD_CTRL & pygame.key.get_mods():
                     new_object = Platform(event.pos)
                 elif event.button == pygame.BUTTON_MIDDLE and not pygame.KMOD_CTRL & pygame.key.get_mods():
-                    new_object = SimpleMonster(event.pos)
+                    new_object = Monster(event.pos)
             if event.type == pygame.KEYDOWN:
                 if new_object:
                     if event.key == pygame.K_w:
@@ -529,10 +526,11 @@ if __name__ == '__main__':
                         pygame.draw.rect(new_object.image, pygame.Color(new_object.color), pygame.Rect(0, 0, *size))
                 if event.key == pygame.K_1:
                     level = input('В какой уровень сохранить: ')
-                    for i in classes.keys():
-                        with open(f'levels/{level}/{i}.json', 'w') as file:
-                            data = [sprite.rect.topleft for sprite in classes[i][1]]
-                            json.dump(data, file)
+                    with open(f'levels/{level}.json', 'w') as file:
+                        data = []
+                        for i in classes.keys():
+                            data.append([[i, [sprite.rect.x, sprite.rect.y], sprite.size] for sprite in classes[i][1]])
+                        json.dump(data, file)
                 level, hero = open_level(level, hero)
         all_sprites.update()
         all_sprites.draw(screen)
