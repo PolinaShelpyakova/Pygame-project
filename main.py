@@ -57,14 +57,14 @@ class Hero(pygame.sprite.Sprite):
                 if event.key == pygame.K_RIGHT:
                     self.go = True
                     self.route = True
-                if event.key == pygame.K_LEFT:
+                elif event.key == pygame.K_LEFT:
                     self.go = True
                     self.route = False
-            if event.type == pygame.KEYUP:
+            elif event.type == pygame.KEYUP:
                 if event.key == pygame.K_RIGHT:
                     self.go = False
                     self.route = True
-                if event.key == pygame.K_LEFT:
+                elif event.key == pygame.K_LEFT:
                     self.go = False
                     self.route = False
             self.kill()
@@ -182,8 +182,9 @@ class Platform(pygame.sprite.Sprite):
     def __init__(self, pos):
         super().__init__(all_sprites)
         self.pos = pos
+        self.color = 'grey'
         self.image = pygame.Surface((100, 10))
-        pygame.draw.rect(self.image, pygame.Color("grey"), pygame.Rect(0, 0, 100, 10))
+        pygame.draw.rect(self.image, pygame.Color(self.color), pygame.Rect(0, 0, 100, 10))
         self.rect = pygame.Rect(self.pos[0], self.pos[1], 100, 10)
         self.vx = 0
         self.vy = 0
@@ -194,20 +195,35 @@ class Ladder(pygame.sprite.Sprite):
     def __init__(self, pos):
         super().__init__(all_sprites)
         self.pos = pos
+        self.color = 'red'
         self.image = pygame.Surface((10, 100))
-        pygame.draw.rect(self.image, pygame.Color("red"), pygame.Rect(0, 0, 10, 100))
+        pygame.draw.rect(self.image, pygame.Color(self.color), pygame.Rect(0, 0, 10, 100))
         self.rect = pygame.Rect(self.pos[0], self.pos[1], 10, 100)
         self.vx = 0
         self.vy = 0
         self.add(ladder_sprites)
 
 
+class Wall(pygame.sprite.Sprite):
+    def __init__(self, pos):
+        super().__init__(all_sprites)
+        self.pos = pos
+        self.color = 'grey'
+        self.image = pygame.Surface((10, 100))
+        pygame.draw.rect(self.image, pygame.Color(self.color), pygame.Rect(0, 0, 10, 100))
+        self.rect = pygame.Rect(self.pos[0], self.pos[1], 10, 100)
+        self.vx = 0
+        self.vy = 0
+        self.add(wall_sprites)
+
+
 class Box(pygame.sprite.Sprite):
     def __init__(self, pos):
         super().__init__(all_sprites)
         self.pos = pos
+        self.color = 'white'
         self.image = pygame.Surface((50, 50))
-        pygame.draw.rect(self.image, pygame.Color("white"), pygame.Rect(0, 0, 50, 50))
+        pygame.draw.rect(self.image, pygame.Color(self.color), pygame.Rect(0, 0, 50, 50))
         self.rect = pygame.Rect(self.pos[0], self.pos[1], 50, 50)
         self.vx = 0
         self.vy = 0
@@ -233,25 +249,13 @@ class Acid(pygame.sprite.Sprite):
     def __init__(self, pos):
         super().__init__(all_sprites)
         self.pos = pos
+        self.color = 'green'
         self.image = pygame.Surface((100, 10))
-        pygame.draw.rect(self.image, pygame.Color("green"), pygame.Rect(0, 0, 100, 10))
+        pygame.draw.rect(self.image, pygame.Color(self.color), pygame.Rect(0, 0, 100, 10))
         self.rect = pygame.Rect(self.pos[0], self.pos[1], 100, 10)
         self.vx = 0
         self.vy = 0
         self.add(acid_sprites)
-
-
-class Wall(pygame.sprite.Sprite):
-    def __init__(self, pos, size):
-        super().__init__(all_sprites)
-        self.pos = pos
-        self.size = size
-        self.image = pygame.Surface(self.size)
-        pygame.draw.rect(self.image, pygame.Color("grey"), pygame.Rect(0, 0, *self.size))
-        self.rect = pygame.Rect(self.pos[0], self.pos[1], 100, 10)
-        self.vx = 0
-        self.vy = 0
-        self.add(wall_sprites)
 
 
 class Monsters(pygame.sprite.Sprite):
@@ -264,8 +268,9 @@ class SimpleMonster(Monsters):
     def __init__(self, pos):
         super().__init__(pos)
         self.pos = pos
+        self.color = 'pink'
         self.image = pygame.Surface((20, 80))
-        pygame.draw.rect(self.image, pygame.Color("pink"), pygame.Rect(0, 0, 20, 80))
+        pygame.draw.rect(self.image, pygame.Color(self.color), pygame.Rect(0, 0, 20, 80))
         self.rect = pygame.Rect(self.pos[0], self.pos[1], 20, 80)
         self.vx = 0
         self.vy = 0
@@ -283,12 +288,14 @@ class SimpleMonster(Monsters):
                 not pygame.sprite.spritecollideany(self, acid_sprites) and \
                 not pygame.sprite.spritecollideany(self, box_sprites):
             self.rect = self.rect.move(self.vx, self.vy + 10)
-        if pygame.sprite.spritecollideany(self, platform_sprites):
+        elif pygame.sprite.spritecollideany(self, platform_sprites):
             if self.route:
                 self.rect = self.rect.move(self.vx + 5, self.vy)
             else:
                 self.rect = self.rect.move(self.vx - 5, self.vy)
-        if pygame.sprite.spritecollideany(self, ladder_sprites) or pygame.sprite.spritecollideany(self, wall_sprites):
+        if pygame.sprite.spritecollide(self, ladder_sprites, False):
+            self.route = True if not self.route else False
+        if pygame.sprite.spritecollide(self, wall_sprites, False):
             self.route = True if not self.route else False
 
 
@@ -480,7 +487,8 @@ if __name__ == '__main__':
     simple_monster_sprites = pygame.sprite.Group()
 
     classes = {'hero': [Hero, hero_sprites], 'platforms': [Platform, platform_sprites], 'boxes': [Box, box_sprites],
-               'ladders': [Ladder, ladder_sprites], 'acids': [Acid, acid_sprites]}
+               'ladders': [Ladder, ladder_sprites], 'acids': [Acid, acid_sprites], 'walls': [Wall, wall_sprites],
+               'simple_monster': [SimpleMonster, simple_monster_sprites]}
     new_object = None  # Любой новый созданный объект можно двигать, кроме героя.
     level = 1
     hero = None
@@ -489,15 +497,9 @@ if __name__ == '__main__':
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.KM & pygame.key.get_mods():
-                    if event.type == pygame.MOUSEBUTTONDOWN:
-                        if event.button == pygame.BUTTON_LEFT:
-                            new_object = Wall(event.pos, (100, 100))
-
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == pygame.BUTTON_LEFT and pygame.KMOD_SHIFT & pygame.key.get_mods():
-                    new_object = Wall(event.pos, (10, 100))
+                    new_object = Wall(event.pos)
                 elif event.button == pygame.BUTTON_LEFT and pygame.KMOD_CTRL & pygame.key.get_mods():
                     new_object = Ladder(event.pos)
                 elif event.button == pygame.BUTTON_RIGHT and pygame.KMOD_CTRL & pygame.key.get_mods():
@@ -520,6 +522,11 @@ if __name__ == '__main__':
                         new_object.rect.x -= 1
                     if event.key == pygame.K_d:
                         new_object.rect.x += 1
+                    if event.key == pygame.K_r:
+                        size = tuple(int(i) for i in input().split())
+                        new_object.rect = pygame.Rect(*new_object.pos, *size)
+                        new_object.image = pygame.Surface(size)
+                        pygame.draw.rect(new_object.image, pygame.Color(new_object.color), pygame.Rect(0, 0, *size))
                 if event.key == pygame.K_1:
                     level = input('В какой уровень сохранить: ')
                     for i in classes.keys():
