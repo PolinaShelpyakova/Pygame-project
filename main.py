@@ -346,12 +346,21 @@ def map_of_levels():
         text='В меню',
         manager=manager
     )
-    for i in range(3):
-        level_btn = pygame_gui.elements.UIButton(
-            relative_rect=pygame.Rect((i * 100 + 100, 400), (50, 50)),
-            text=f'{str(i + 1)}',
-            manager=manager
-        )
+    level_btn1 = pygame_gui.elements.UIButton(
+        relative_rect=pygame.Rect((0 * 100 + 100, 400), (50, 50)),
+        text=f'{str(0 + 1)}',
+        manager=manager
+    )
+    level_btn2 = pygame_gui.elements.UIButton(
+        relative_rect=pygame.Rect((1 * 100 + 100, 400), (50, 50)),
+        text=f'{str(1 + 1)}',
+        manager=manager
+    )
+    level_btn3 = pygame_gui.elements.UIButton(
+        relative_rect=pygame.Rect((2 * 100 + 100, 400), (50, 50)),
+        text=f'{str(2 + 1)}',
+        manager=manager
+    )
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -360,8 +369,12 @@ def map_of_levels():
                 if event.user_type == pygame_gui.UI_BUTTON_PRESSED:
                     if menu_btn.pressed:
                         start_screen()
-                    if level_btn.pressed:
-                        open_level(level_btn.text, None)
+                    if level_btn1.pressed:
+                        open_level(level_btn1.text, None)
+                    if level_btn2.pressed:
+                        open_level(level_btn2.text, None)
+                    if level_btn3.pressed:
+                        open_level(level_btn3.text, None)
                     return
             manager.process_events(event)
         manager.update(FPS)
@@ -549,4 +562,3 @@ if __name__ == '__main__':
         pygame.display.flip()
         clock.tick(FPS)
     pygame.quit()
-
