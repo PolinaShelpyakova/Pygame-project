@@ -148,12 +148,6 @@ class Hero(pygame.sprite.Sprite):
         else:
             self.is_climb = False
         if pygame.sprite.spritecollideany(self, box_sprites) and pygame.sprite.spritecollideany(self, platform_sprites):
-            push_box = pygame.sprite.spritecollideany(self, box_sprites)
-            if event is not None:
-                if event.key == pygame.K_RIGHT:
-                    push_box.push(True)
-                if event.key == pygame.K_LEFT:
-                    push_box.push(False)
             self.action('push', event)
         if pygame.sprite.spritecollideany(self, acid_sprites) or pygame.sprite.spritecollideany(self, monster_sprites):
             self.action('die', event)
@@ -242,12 +236,37 @@ class Box(pygame.sprite.Sprite):
                 not pygame.sprite.spritecollideany(self, ladder_sprites) and \
                 not pygame.sprite.spritecollideany(self, acid_sprites):
             self.rect = self.rect.move(self.vx, self.vy + 10)
+        if pygame.sprite.spritecollideany(self, hero_sprites) and pygame.sprite.spritecollideany(self, platform_sprites)\
+                or pygame.sprite.spritecollide(self, hero_sprites, False) and pygame.sprite.spritecollide(self, platform_sprites, False):
+            if event is not None:
+                if event.key == pygame.K_RIGHT:
+                    self.push(True)
+                if event.key == pygame.K_LEFT:
+                    self.push(False)
 
     def push(self, route):
         if route:
             self.rect = self.rect.move(self.vx + 10, self.vy)
         else:
             self.rect = self.rect.move(self.vx - 10, self.vy)
+
+
+class Door(pygame.sprite.Sprite):
+    def __init__(self, pos, size=(100, 50)):
+        super().__init__(all_sprites)
+        self.pos = pos
+        self.size = size
+        self.color = 'white'
+        self.image = pygame.Surface(self.size)
+        pygame.draw.rect(self.image, pygame.Color(self.color), pygame.Rect(0, 0, *self.size))
+        self.rect = pygame.Rect(self.pos[0], self.pos[1], *self.size)
+        self.vx = 0
+        self.vy = 0
+        self.add(door_sprites)
+
+    def update(self, event=None):
+        if pygame.sprite.spritecollide(self, hero_sprites, False):
+            open_level(2)
 
 
 class Acid(pygame.sprite.Sprite):
@@ -455,14 +474,10 @@ def final_screen():
 
 
 def open_level(level):
-    # if hero is not None:
-    #     if hero.is_hero_die:
-    #         level += 1
-    #         final_screen()
-    # all_sprites.empty()
+    all_sprites.empty()
     direct = f'level_{str(level)}'
-    # for i in classes.keys():
-    #     classes[i][1].empty()
+    for i in classes.keys():
+        classes[i][1].empty()
     if os.path.exists(f'levels/{direct}.json'):
         with open(f'levels/{direct}.json', 'r', encoding='utf-8') as file:
             data = json.load(file)
@@ -470,10 +485,6 @@ def open_level(level):
                 if objs != []:
                     for pos in objs:
                         classes[pos[0]][0](pos[1], pos[2])
-    # else:
-    #     final_screen()
-    #     level = 1
-    # return level
 
 
 if __name__ == '__main__':
@@ -496,11 +507,12 @@ if __name__ == '__main__':
     acid_sprites = pygame.sprite.Group()
     wall_sprites = pygame.sprite.Group()
     monster_sprites = pygame.sprite.Group()
+    door_sprites = pygame.sprite.Group()
 
     classes = {'hero': [Hero, hero_sprites], 'platforms': [Platform, platform_sprites],
                'boxes': [Box, box_sprites], 'ladders': [Ladder, ladder_sprites],
                'acids': [Acid, acid_sprites], 'walls': [Wall, wall_sprites],
-               'monster': [Monster, monster_sprites]}
+               'monster': [Monster, monster_sprites], 'door': [Door, monster_sprites, []]}
     start_screen()
     while running:
         is_update = True
@@ -515,4 +527,6 @@ if __name__ == '__main__':
         all_sprites.draw(screen)
         pygame.display.flip()
         clock.tick(FPS)
+        if FLAG_NEXT_LVL:
+            open_level(2)
     pygame.quit()

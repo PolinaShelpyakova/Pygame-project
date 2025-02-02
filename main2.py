@@ -295,6 +295,23 @@ class Monster(pygame.sprite.Sprite):
             self.route = True if not self.route else False
 
 
+class Door(pygame.sprite.Sprite):
+    def __init__(self, pos, size=(50, 100)):
+        super().__init__(all_sprites)
+        self.pos = pos
+        self.size = size
+        self.color = 'pink'
+        self.image = pygame.Surface(self.size)
+        pygame.draw.rect(self.image, pygame.Color(self.color), pygame.Rect(0, 0, *self.size))
+        self.rect = pygame.Rect(self.pos[0], self.pos[1], *self.size)
+        self.vx = 0
+        self.vy = 0
+        self.add(door_sprites)
+
+    def update(self, event=None):
+        pass
+
+
 def terminate():
     pygame.quit()
     sys.exit()
@@ -496,11 +513,12 @@ if __name__ == '__main__':
     acid_sprites = pygame.sprite.Group()
     wall_sprites = pygame.sprite.Group()
     monster_sprites = pygame.sprite.Group()
+    door_sprites = pygame.sprite.Group()
 
     classes = {'hero': [Hero, hero_sprites, []], 'platforms': [Platform, platform_sprites, []],
                'boxes': [Box, box_sprites, []], 'ladders': [Ladder, ladder_sprites, []],
                'acids': [Acid, acid_sprites, []], 'walls': [Wall, wall_sprites, []],
-               'monster': [Monster, monster_sprites, []]}
+               'monster': [Monster, monster_sprites, []], 'door': [Door, monster_sprites, []]}
     new_object = None  # Любой новый созданный объект можно двигать, кроме героя.
     level = 1
     hero = None
@@ -515,6 +533,9 @@ if __name__ == '__main__':
                 if event.button == pygame.BUTTON_LEFT and pygame.KMOD_SHIFT & pygame.key.get_mods():
                     new_object = Wall(event.pos)
                     new_object.name = 'walls'
+                elif event.button == pygame.BUTTON_RIGHT and pygame.KMOD_SHIFT & pygame.key.get_mods():
+                    new_object = Door(event.pos)
+                    new_object.name = 'door'
                 elif event.button == pygame.BUTTON_LEFT and pygame.KMOD_CTRL & pygame.key.get_mods():
                     new_object = Ladder(event.pos)
                     new_object.name = 'ladders'
@@ -536,13 +557,15 @@ if __name__ == '__main__':
             if event.type == pygame.KEYDOWN:
                 if new_object:
                     if event.key == pygame.K_w:
-                        new_object.rect.y -= 1
+                        new_object.rect.y -= 10 if pygame.KMOD_SHIFT & pygame.key.get_mods() else 1
                     if event.key == pygame.K_s:
-                        new_object.rect.y += 1
+                        new_object.rect.y += 10 if pygame.KMOD_SHIFT & pygame.key.get_mods() else 1
                     if event.key == pygame.K_a:
-                        new_object.rect.x -= 1
+                        new_object.rect.x -= 10 if pygame.KMOD_SHIFT & pygame.key.get_mods() else 1
                     if event.key == pygame.K_d:
-                        new_object.rect.x += 1
+                        new_object.rect.x += 10 if pygame.KMOD_SHIFT & pygame.key.get_mods() else 1
+                    if event.key == pygame.K_DELETE:
+                        new_object.kill()
                     if event.key == pygame.K_r:
                         size = tuple(int(i) for i in input().split())
                         new_object.rect = pygame.Rect(*new_object.pos, *size)
