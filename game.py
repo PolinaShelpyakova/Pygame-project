@@ -296,7 +296,7 @@ class Door(pygame.sprite.Sprite):
         global lvl
         if pygame.sprite.spritecollide(self, hero_sprites, False):
             lvl += 1
-            if lvl > 3:
+            if lvl > 4:
                 final_screen()
                 lvl = 0
             else:
@@ -566,7 +566,7 @@ if __name__ == '__main__':
     pygame.mixer.music.load("music/song18.mp3")
     pygame.mixer.music.play(-1)
     pause = False
-    pygame.display.set_caption('Game')
+    pygame.display.set_caption('Door to Safety')
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     clock = pygame.time.Clock()
 
