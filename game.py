@@ -8,6 +8,7 @@ import pygame
 WIDTH = 800
 HEIGHT = 600
 FPS = 30
+LVL = (i for i in range(1, 5))
 
 
 class Hero(pygame.sprite.Sprite):
@@ -236,8 +237,12 @@ class Box(pygame.sprite.Sprite):
                 not pygame.sprite.spritecollideany(self, ladder_sprites) and \
                 not pygame.sprite.spritecollideany(self, acid_sprites):
             self.rect = self.rect.move(self.vx, self.vy + 10)
-        if pygame.sprite.spritecollideany(self, hero_sprites) and pygame.sprite.spritecollideany(self, platform_sprites)\
-                or pygame.sprite.spritecollide(self, hero_sprites, False) and pygame.sprite.spritecollide(self, platform_sprites, False):
+        if pygame.sprite.spritecollideany(self, hero_sprites) and \
+                pygame.sprite.spritecollideany(self, platform_sprites) and \
+                pygame.sprite.spritecollideany(hero_sprites.sprites()[0], platform_sprites) or \
+                pygame.sprite.spritecollide(self, hero_sprites, False) and \
+                pygame.sprite.spritecollide(self, platform_sprites, False) and \
+                pygame.sprite.spritecollideany(hero_sprites.sprites()[0], platform_sprites):
             if event is not None:
                 if event.key == pygame.K_RIGHT:
                     self.push(True)
@@ -266,7 +271,7 @@ class Door(pygame.sprite.Sprite):
 
     def update(self, event=None):
         if pygame.sprite.spritecollide(self, hero_sprites, False):
-            open_level(2)
+            open_level(next(LVL))
 
 
 class Acid(pygame.sprite.Sprite):
@@ -394,8 +399,13 @@ def map_of_levels():
                     if level_btn1.pressed:
                         open_level(level_btn1.text)
                     if level_btn2.pressed:
+                        next(LVL)
+                        next(LVL)
                         open_level(level_btn2.text)
                     if level_btn3.pressed:
+                        next(LVL)
+                        next(LVL)
+                        next(LVL)
                         open_level(level_btn3.text)
                     return
             manager.process_events(event)
@@ -527,6 +537,5 @@ if __name__ == '__main__':
         all_sprites.draw(screen)
         pygame.display.flip()
         clock.tick(FPS)
-        if FLAG_NEXT_LVL:
-            open_level(2)
+
     pygame.quit()
