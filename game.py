@@ -512,7 +512,7 @@ if __name__ == '__main__':
     classes = {'hero': [Hero, hero_sprites], 'platforms': [Platform, platform_sprites],
                'boxes': [Box, box_sprites], 'ladders': [Ladder, ladder_sprites],
                'acids': [Acid, acid_sprites], 'walls': [Wall, wall_sprites],
-               'monster': [Monster, monster_sprites], 'door': [Door, monster_sprites, []]}
+               'monster': [Monster, monster_sprites], 'door': [Door, door_sprites, []]}
     start_screen()
     while running:
         is_update = True

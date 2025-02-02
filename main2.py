@@ -281,8 +281,7 @@ class Monster(pygame.sprite.Sprite):
     def collide(self):
         if not pygame.sprite.spritecollideany(self, platform_sprites) and \
                 not pygame.sprite.spritecollideany(self, ladder_sprites) and \
-                not pygame.sprite.spritecollideany(self, acid_sprites) and \
-                not pygame.sprite.spritecollideany(self, box_sprites):
+                not pygame.sprite.spritecollideany(self, acid_sprites):
             self.rect = self.rect.move(self.vx, self.vy + 10)
         elif pygame.sprite.spritecollideany(self, platform_sprites):
             if self.route:
@@ -468,28 +467,19 @@ def final_screen():
         clock.tick(FPS)
 
 
-def open_level(level, hero):
-    if event.key == pygame.K_2:
-        if hero is not None:
-            if hero.is_hero_die:
-                level += 1
-                final_screen()
-        all_sprites.empty()
-        direct = f'level_{str(level)}'
-        for i in classes.keys():
-            classes[i][1].empty()
-        if os.path.exists(f'levels/{direct}.json'):
-            with open(f'levels/{direct}.json', 'r', encoding='utf-8') as file:
-                data = json.load(file)
-                for objs in data:
-                    if objs != []:
-                        for pos in objs:
-                            classes[pos[0]][1].add(classes[pos[0]][0](pos[1], pos[2]))
-        else:
-            final_screen()
-            level = 1
-        hero = None
-    return level, hero
+def open_level(level):
+    all_sprites.empty()
+    direct = f'level_{str(level)}'
+    for i in classes.keys():
+        classes[i][1].empty()
+    if os.path.exists(f'levels/{direct}.json'):
+        with open(f'levels/{direct}.json', 'r', encoding='utf-8') as file:
+            data = json.load(file)
+            for objs in data:
+                if objs:
+                    for pos in objs:
+                        classes[pos[0]][1].add(classes[pos[0]][0](pos[1], pos[2]))
+                        classes[pos[0]][2].append(classes[pos[0]][0](pos[1], pos[2]))
 
 
 if __name__ == '__main__':
@@ -518,7 +508,7 @@ if __name__ == '__main__':
     classes = {'hero': [Hero, hero_sprites, []], 'platforms': [Platform, platform_sprites, []],
                'boxes': [Box, box_sprites, []], 'ladders': [Ladder, ladder_sprites, []],
                'acids': [Acid, acid_sprites, []], 'walls': [Wall, wall_sprites, []],
-               'monster': [Monster, monster_sprites, []], 'door': [Door, monster_sprites, []]}
+               'monster': [Monster, monster_sprites, []], 'door': [Door, door_sprites, []]}
     new_object = None  # Любой новый созданный объект можно двигать, кроме героя.
     level = 1
     hero = None
@@ -565,7 +555,9 @@ if __name__ == '__main__':
                     if event.key == pygame.K_d:
                         new_object.rect.x += 10 if pygame.KMOD_SHIFT & pygame.key.get_mods() else 1
                     if event.key == pygame.K_DELETE:
-                        new_object.kill()
+                        classes[new_object.name][1].remove(new_object)
+                        all_sprites.remove(new_object)
+                        new_object = None
                     if event.key == pygame.K_r:
                         size = tuple(int(i) for i in input().split())
                         new_object.rect = pygame.Rect(*new_object.pos, *size)
@@ -573,13 +565,15 @@ if __name__ == '__main__':
                         pygame.draw.rect(new_object.image, pygame.Color(new_object.color), pygame.Rect(0, 0, *size))
                 if event.key == pygame.K_1:
                     level = input('В какой уровень сохранить: ')
-                    classes[new_object.name][2].append(new_object)
+                    if new_object:
+                        classes[new_object.name][2].append(new_object)
                     with open(f'levels/{level}.json', 'w') as file:
                         data = []
                         for i in classes.keys():
                             data.append([[i, [sprite.rect.x, sprite.rect.y], sprite.size] for sprite in classes[i][2]])
                         json.dump(data, file)
-                level, hero = open_level(level, hero)
+                if event.key == pygame.K_2:
+                    open_level(input())
         all_sprites.update()
         all_sprites.draw(screen)
         pygame.display.flip()
