@@ -441,7 +441,7 @@ def final_screen():
     manager = pygame_gui.UIManager((WIDTH, HEIGHT))
     start_new_level_btn = pygame_gui.elements.UIButton(
         relative_rect=pygame.Rect((300, 300), (150, 50)),
-        text='Следующий уровень',
+        text='1 уровень',
         manager=manager
     )
     menu_btn = pygame_gui.elements.UIButton(
