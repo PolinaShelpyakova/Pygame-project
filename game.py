@@ -8,7 +8,7 @@ import pygame
 WIDTH = 800
 HEIGHT = 600
 FPS = 30
-LVL = (i for i in range(1, 5))
+lvl = 1
 
 
 class Hero(pygame.sprite.Sprite):
@@ -155,6 +155,12 @@ class Hero(pygame.sprite.Sprite):
             self.is_hero_die = True
 
     def jump(self, event):
+        """
+        Прыжок игрока.
+
+        :param event:
+        :return: None
+        """
         if event is not None:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_UP and not self.is_climb:
@@ -233,6 +239,11 @@ class Box(pygame.sprite.Sprite):
         self.collide()
 
     def collide(self):
+        """
+        Столкновение с другими группами спрайтов.
+
+        :return: None
+        """
         if not pygame.sprite.spritecollideany(self, platform_sprites) and \
                 not pygame.sprite.spritecollideany(self, ladder_sprites) and \
                 not pygame.sprite.spritecollideany(self, acid_sprites):
@@ -250,6 +261,12 @@ class Box(pygame.sprite.Sprite):
                     self.push(False)
 
     def push(self, route):
+        """
+        Движение ящика в направлении с героем.
+
+        :param route: True/False
+        :return:
+        """
         if route:
             self.rect = self.rect.move(self.vx + 10, self.vy)
         else:
@@ -270,8 +287,20 @@ class Door(pygame.sprite.Sprite):
         self.add(door_sprites)
 
     def update(self, event=None):
+        """
+        Изменение уровня при столкновении героя с дверью.
+
+        :param event: None/event
+        :return: None
+        """
+        global lvl
         if pygame.sprite.spritecollide(self, hero_sprites, False):
-            open_level(next(LVL))
+            lvl += 1
+            if lvl > 3:
+                final_screen()
+                lvl = 0
+            else:
+                open_level(lvl)
 
 
 class Acid(pygame.sprite.Sprite):
@@ -306,6 +335,11 @@ class Monster(pygame.sprite.Sprite):
         self.collide()
 
     def collide(self):
+        """
+        Столкновение с другими группами спрайтов.
+
+        :return: None
+        """
         if not pygame.sprite.spritecollideany(self, platform_sprites) and \
                 not pygame.sprite.spritecollideany(self, ladder_sprites) and \
                 not pygame.sprite.spritecollideany(self, acid_sprites) and \
@@ -323,11 +357,21 @@ class Monster(pygame.sprite.Sprite):
 
 
 def terminate():
+    """
+    Выход из игры.
+
+    :return: None
+    """
     pygame.quit()
     sys.exit()
 
 
 def start_screen():
+    """
+    Заставка игры. Обработка событий интерфейса.
+
+    :return: None
+    """
     screen.fill((255, 255, 255))
     manager = pygame_gui.UIManager((WIDTH, HEIGHT))
     start_game_btn = pygame_gui.elements.UIButton(
@@ -366,6 +410,12 @@ def start_screen():
 
 
 def map_of_levels():
+    """
+    Карта уровней. Обработка событий интерфейса.
+
+    :return: None
+    """
+    global lvl
     screen.fill((0, 255, 0))
     manager = pygame_gui.UIManager((WIDTH, HEIGHT))
     menu_btn = pygame_gui.elements.UIButton(
@@ -397,16 +447,14 @@ def map_of_levels():
                     if menu_btn.pressed:
                         start_screen()
                     if level_btn1.pressed:
-                        open_level(level_btn1.text)
+                        lvl = 1
+                        open_level(lvl)
                     if level_btn2.pressed:
-                        next(LVL)
-                        next(LVL)
-                        open_level(level_btn2.text)
+                        lvl = 2
+                        open_level(lvl)
                     if level_btn3.pressed:
-                        next(LVL)
-                        next(LVL)
-                        next(LVL)
-                        open_level(level_btn3.text)
+                        lvl = 3
+                        open_level(lvl)
                     return
             manager.process_events(event)
         manager.update(FPS)
@@ -416,6 +464,11 @@ def map_of_levels():
 
 
 def settings():
+    """
+    Настройка музыки. Обработка событий интерфейса.
+
+    :return: None
+    """
     global pause
     screen.fill((0, 0, 255))
     manager = pygame_gui.UIManager((WIDTH, HEIGHT))
@@ -453,6 +506,11 @@ def settings():
 
 
 def final_screen():
+    """
+    Финальное окно при прохождении всех уровней. Обработка событий интерфейса.
+
+    :return: None
+    """
     screen.fill((255, 255, 255))
     manager = pygame_gui.UIManager((WIDTH, HEIGHT))
     start_new_level_btn = pygame_gui.elements.UIButton(
@@ -484,6 +542,12 @@ def final_screen():
 
 
 def open_level(level):
+    """
+    Загрузка уровня.
+
+    :param level: str/int
+    :return: None
+    """
     all_sprites.empty()
     direct = f'level_{str(level)}'
     for i in classes.keys():
@@ -537,5 +601,4 @@ if __name__ == '__main__':
         all_sprites.draw(screen)
         pygame.display.flip()
         clock.tick(FPS)
-
     pygame.quit()
