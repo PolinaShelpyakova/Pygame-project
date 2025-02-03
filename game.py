@@ -556,7 +556,7 @@ def open_level(level):
         with open(f'levels/{direct}.json', 'r', encoding='utf-8') as file:
             data = json.load(file)
             for objs in data:
-                if objs != []:
+                if objs:
                     for pos in objs:
                         classes[pos[0]][0](pos[1], pos[2])
 
